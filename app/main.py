@@ -16,6 +16,7 @@ def get_data(request: Request):
     MAX_REQUESTS = 5
     WINDOW_SECONDS = 60
     
+    # Back to clean, standard middleware exception patterns
     if not limiter.is_allowed(client_ip, MAX_REQUESTS, WINDOW_SECONDS):
         raise HTTPException(
             status_code=429,

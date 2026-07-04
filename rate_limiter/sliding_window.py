@@ -2,7 +2,7 @@ import time
 from redis import Redis
 
 class SlidingWindowLogLimiter:
-    def _init_(self,redis_client:Redis):
+    def __init__(self,redis_client:Redis):
         self.redis = redis_client
         self.LUA_SCRIPT = """
         local key  = KEYS[1] 
@@ -23,16 +23,16 @@ class SlidingWindowLogLimiter:
         
         """
         self.lua_executor = self.redis.register_script(self.LUA_SCRIPT)
-def is_allowed(self, client_id: str, limit: int, window_seconds: int) -> bool:
-        redis_key = f"rl:sliding:{client_id}"
-        current_time = time.time()
-        
-        try:
-            result = self.lua_executor(
-                keys=[redis_key],
-                args=[current_time, window_seconds, limit]
-            )
-            return bool(result)
-        except Exception as e:
-            print(f"SLIDING WINDOW ERROR: {e}", flush=True)
-            return True  # Fail-open
+    def is_allowed(self, client_id: str, limit: int, window_seconds: int) -> bool:
+            redis_key = f"rl:sliding:{client_id}"
+            current_time = time.time()
+            
+            try:
+                result = self.lua_executor(
+                    keys=[redis_key],
+                    args=[current_time, window_seconds, limit]
+                )
+                return bool(result)
+            except Exception as e:
+                print(f"SLIDING WINDOW ERROR: {e}", flush=True)
+                return True  # Fail-open
