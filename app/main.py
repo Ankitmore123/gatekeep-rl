@@ -2,11 +2,12 @@
 from fastapi import FastAPI, Request, HTTPException
 from redis import Redis
 from rate_limiter.fixed_window import FixedWindowLimiter
+from rate_limiter.sliding_window import SlidingWindowLogLimiter
 
 app = FastAPI()
 
 redis_client = Redis(host='redis', port=6379, db=0, decode_responses=True)
-limiter = FixedWindowLimiter(redis_client)
+limiter = SlidingWindowLogLimiter(redis_client)
 
 @app.get("/api/data")
 def get_data(request: Request):
