@@ -48,6 +48,8 @@ class TokenBucketLimiter:
             else:
                 status = "BLOCKED"
             print(f"--- [Token Bucket] Key: {redis_key} | Status: {status} ---", flush=True)
+            return result == 1
+
         except Exception as e:
             print(f"Token BUCKET ERROR :{e}",flush = True)
             return True
