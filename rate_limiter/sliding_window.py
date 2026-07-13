@@ -14,7 +14,7 @@ class SlidingWindowLogLimiter:
         local current_requests =redis.call('ZCARD',key)
         
         if current_requests <limit then
-            redis.call('ZADD',key,now,now)
+            redis.call('ZADD',key,now,now .. '-' .. tostring(math.random()))
             redis.call('EXPIRE',key,window)
             return 1
         else

@@ -23,3 +23,16 @@ def get_data(request: Request):
         )
         
     return {"message": "Success! Here is your data."}
+@app.get("/api/sliding-data")
+def get_sliding_data(request: Request):
+    user_id = request.headers.get("X-User-ID", request.client.host)
+    if not limiter.is_allowed(user_id, 5, 60):
+        raise HTTPException(status_code=429, detail="Rate limit exceeded.")
+    return {"message": "sliding window ok"}
+
+@app.get("/api/token-bucket-data")
+def get_token_bucket_data(request: Request):
+    user_id = request.headers.get("X-User-ID", request.client.host)
+    if not limiter.is_allowed(user_id, 5, 0.2):
+        raise HTTPException(status_code=429, detail="Rate limit exceeded.")
+    return {"message": "token bucket ok"}
