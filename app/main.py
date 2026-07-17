@@ -7,6 +7,12 @@ from rate_limiter.sliding_window import SlidingWindowLogLimiter
 from rate_limiter.token_bucket import TokenBucketLimiter
 app = FastAPI()
 
+API_KEY_DATABASE = {
+    "key_free_abc123":      {"client_id": "client_01", "tier": "free"},
+    "key_pro_xyz789":       {"client_id": "client_02", "tier": "pro"},
+    "key_enterprise_999":   {"client_id": "client_03", "tier": "enterprise"}
+}
+
 redis_client = Redis(host='redis', port=6379, db=0, decode_responses=True)
 limiter = TokenBucketLimiter(redis_client)
 TIER_CONFIGS = {
@@ -16,18 +22,20 @@ TIER_CONFIGS = {
 }
 def verify_and_deduct_quota(x_api_key :str , cost:int):
     if not x_api_key:
-        raise HTTPException(status_code=401, detail="API Key missing in headers.")
+        raise HTTPException(status_code=401, detail="Missing X-API-Key header.")
     
-    if "enterprise" in x_api_key.lower():
-        tier_name = "enterprise"
-    elif "pro" in x_api_key.lower():
-        tier_name = "pro"
-    else:
-        tier_name = "free"
-    capacity = 5
-    refill_rate= 0.2
-    CONFIG = TIER_CONFIGS[tier_name]
-    redis_key = f"{tier_name}:{x_api_key}"
+    # Strict lookup: If the key isn't in our registry, reject immediately!
+    # This completely kills the "enterprise_lol" exploit.
+    if x_api_key not in API_KEY_DATABASE:
+        raise HTTPException(status_code=403, detail="Invalid or unauthorized API key.")
+        
+    client_profile = API_KEY_DATABASE[x_api_key]
+    tier = client_profile["tier"]
+    client_id = client_profile["client_id"]
+    
+    config = TIER_CONFIGS[tier]
+    CONFIG = TIER_CONFIGS[tier]
+    redis_key = f"{tier}:{x_api_key}"
     # Back to clean, standard middleware exception patterns
     if not limiter.is_allowed(redis_key, CONFIG["capacity"] ,CONFIG["refill_rate"],cost =cost):
         raise HTTPException(
