@@ -10,12 +10,12 @@ class TokenBucketLimiter:
 
         local capacity = tonumber(ARGV[2])
         local refill_rate = tonumber(ARGV[3])
-
+        local cost = tonumber(ARGV[4])
         local data = redis.call("HMGET", key, 'tokens', 'last_updated')
         local current_tokens = tonumber(data[1])
         local last_updated = tonumber(data[2])
 
-        if not current_tokens then
+        if not current_tokens or last_updated == nil then
             current_tokens = capacity
             last_updated = now
         end
@@ -24,8 +24,8 @@ class TokenBucketLimiter:
         local tokens_to_add = time_elapsed * refill_rate
         local new_tokens = math.min(capacity, current_tokens + tokens_to_add)
 
-        if new_tokens >= 1 then
-            new_tokens = new_tokens - 1
+        if new_tokens >= cost then
+            new_tokens = new_tokens - cost
             redis.call('HMSET', key, 'tokens', new_tokens, 'last_updated', now)
             redis.call('EXPIRE', key, math.ceil(capacity / refill_rate))
             return 1
